@@ -24,7 +24,7 @@
       (flush))
     agent))
 
-(def logfile-format (time-format/formatter "dd/MMM/YYYY:HH:mm:ss Z"))
+(def timestamp-format (time-format/formatter "dd/MMM/YYYY:HH:mm:ss Z"))
 
 (defn wrap-with-common-log [handler & {:keys [filename]}]
   (reset! logfile-name filename)
@@ -35,7 +35,7 @@
       (send-off writer log (print-str remote-addr
                                       "-"
                                       "-"
-                                      (str "[" (time-format/unparse logfile-format (time/now)) "]")
+                                      (str "[" (time-format/unparse timestamp-format (time/now)) "]")
                                       (str \"
                                            (string/upper-case (name request-method))
                                            " "
