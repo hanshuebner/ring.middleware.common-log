@@ -1,4 +1,4 @@
-(defproject ring.middleware.common-log "0.1.0-SNAPSHOT"
+(defproject ring.middleware.common-log "0.1.0"
   :description "A ring middleware to log requests in Common Log format"
   :url "https://github.com/hanshuebner/ring.middleware.common-log"
   :license {:name "Eclipse Public License"
