@@ -37,6 +37,16 @@ megabyte, use this:
                             :max-file-size 1000000)))
 ```
 
+## Size limit ##
+
+When the `:max-file-size` option is used, the log writer checks
+whether the log file is larger than that given size, in bytes.  If so,
+it renames the current file name to include a time stamp before the
+file extension and opens a new log file with the name defined with the
+`:filename` option.  The time stamp is in `YYYYMMDDHHMMSS` format, so
+for example if the `:filename` option was set to `/tmp/access.log`, a
+possible archival file name would be `/tmp/access-201502011319.log`.
+
 ## License ##
 
 Copyright © 2015 Hans Hübner
