@@ -1,33 +1,51 @@
 (ns ring.middleware.common-log
   (:require [clojure.string :as string]
             [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [clj-time.core :as time]
             [clj-time.format :as time-format]))
 
 (defonce flush-interval 100)
 
-(defonce writer (agent {}))
+(def writer (agent {:filename "access.log"
+                    :max-file-size (* 10 1000 1000)
+                    :rotate? true}))
 
-(defonce logfile-name (atom nil))
+(defonce file-timestamp-format (time-format/formatter "yyyyMMddHHmm"))
 
-(defn open-stream [agent]
+(defn- open-stream [agent]
   (assoc agent
-         :stream (io/writer @logfile-name :append true)))
+         :stream (io/writer (:filename agent) :append true)))
 
-(defn ensure-stream [agent]
-  (if (:stream agent)
-    agent
-    (open-stream agent)))
+(defn- archive-current-file [filename]
+  (let [timestamp (time-format/unparse file-timestamp-format (time/now))
+        archive-filename (string/replace filename #"^(.*)[.](.*)$" (str  "$1-" timestamp ".$2"))]
+    (if (.renameTo (io/file filename) (io/file archive-filename))
+      (log/info "renamed log file" filename "to" archive-filename)
+      (log/error "could not rename log file" filename "to" archive-filename))))
 
-(defn flush-lines [agent]
-  (let [agent (ensure-stream agent)]
-    (binding [*out* (:stream agent)]
-      (doseq [line (:lines agent)]
-        (println line))
-      (flush))
-    (dissoc agent :lines)))
+(defn- ensure-stream [agent]
+  (let [stream (:stream agent)]
+    (if (and stream
+             (or (not (:rotate? agent))
+                 (< (.length (io/file (:filename agent))) (:max-file-size agent))))
+      agent
+      (do (when stream
+            (.close stream)
+            (archive-current-file (:filename agent)))
+          (open-stream agent)))))
 
-(defn log [agent line]
+(defn- flush-lines [agent]
+  (if (:lines agent)
+    (let [agent (ensure-stream agent)]
+      (binding [*out* (:stream agent)]
+        (doseq [line (:lines agent)]
+          (println line))
+        (flush))
+      (dissoc agent :lines))
+    agent))
+
+(defn- log [agent line]
   (if (:lines agent)
     (update-in agent [:lines] conj line)
     (do (future (Thread/sleep flush-interval)
@@ -35,9 +53,19 @@
         (assoc agent
                :lines [line]))))
 
-(def timestamp-format (time-format/formatter "dd/MMM/YYYY:HH:mm:ss Z"))
+(defn- reopen [agent options]
+  (when (:stream agent)
+    (flush-lines agent)
+    (.close (:stream agent)))
+  options)
 
-(defn wrap-with-common-log [handler & {:keys [filename]}]
+(def line-timestamp-format (time-format/formatter "dd/MMM/YYYY:HH:mm:ss Z"))
+
+(defn wrap-with-common-log [handler & {:keys [filename rotate?] :as options}]
+  (when (and rotate?
+             (= (.lastIndexOf filename ".") -1))
+    (throw (Exception. "log file name must contain a dot character if rotate? is true so that the log timestamp can be filled in when rotating")))
+  (send writer reopen options)
   (reset! logfile-name filename)
   (fn [request]
     (let [response (handler request)
@@ -46,7 +74,7 @@
       (send-off writer log (print-str remote-addr
                                       "-"
                                       "-"
-                                      (str "[" (time-format/unparse timestamp-format (time/now)) "]")
+                                      (str "[" (time-format/unparse line-timestamp-format (time/now)) "]")
                                       (str \"
                                            (string/upper-case (name request-method))
                                            " "
