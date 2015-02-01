@@ -61,12 +61,14 @@
 
 (def line-timestamp-format (time-format/formatter "dd/MMM/YYYY:HH:mm:ss Z"))
 
-(defn wrap-with-common-log [handler & {:keys [filename rotate?] :as options}]
-  (when (and rotate?
+(def defaults {})
+
+(defn wrap-with-common-log [handler & {:keys [filename max-file-size] :as options}]
+  (when (and filename
+             max-file-size
              (= (.lastIndexOf filename ".") -1))
-    (throw (Exception. "log file name must contain a dot character if rotate? is true so that the log timestamp can be filled in when rotating")))
-  (send writer reopen options)
-  (reset! logfile-name filename)
+    (throw (Exception. "log file name must contain a dot character if max-file-size is set so that the log timestamp can be filled in when reopening log file")))
+  (send writer reopen (merge defaults options) options)
   (fn [request]
     (let [response (handler request)
           {:keys [remote-addr request-method uri query-string] :or {remote-addr "-"}} request
