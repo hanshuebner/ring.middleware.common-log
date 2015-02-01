@@ -11,7 +11,7 @@ exceeded.
 
 Latest stable version:
 
-[![Clojars Project](http://clojars.org/ring-middleware-common-log/latest-version.svg)](http://clojars.org/ring-middleware-common-log)
+[![Clojars Project](http://clojars.org/ring.middleware.common-log/latest-version.svg)](http://clojars.org/ring.middleware.common-log)
 
 Add this to your dependencies in `project.clj`.
 
