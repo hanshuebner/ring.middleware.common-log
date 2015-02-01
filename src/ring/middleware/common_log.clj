@@ -4,9 +4,11 @@
             [clj-time.core :as time]
             [clj-time.format :as time-format]))
 
-(def writer (agent {}))
+(defonce flush-interval 100)
 
-(def logfile-name (atom nil))
+(defonce writer (agent {}))
+
+(defonce logfile-name (atom nil))
 
 (defn open-stream [agent]
   (assoc agent
@@ -17,12 +19,21 @@
     agent
     (open-stream agent)))
 
-(defn log [agent line]
+(defn flush-lines [agent]
   (let [agent (ensure-stream agent)]
     (binding [*out* (:stream agent)]
-      (println line)
+      (doseq [line (:lines agent)]
+        (println line))
       (flush))
-    agent))
+    (dissoc agent :lines)))
+
+(defn log [agent line]
+  (if (:lines agent)
+    (update-in agent [:lines] conj line)
+    (do (future (Thread/sleep flush-interval)
+                (send writer flush-lines))
+        (assoc agent
+               :lines [line]))))
 
 (def timestamp-format (time-format/formatter "dd/MMM/YYYY:HH:mm:ss Z"))
 
