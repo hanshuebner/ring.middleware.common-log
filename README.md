@@ -1,10 +1,23 @@
 # ring.middleware.common-log
 
-A ring middleware to log requests in Common Log format
+A ring middleware to log requests in Common Log format.  Supports
+automatic renaming of the log file if a size limit is exceeded.
 
-## Usage
+## Summary
 
-FIXME
+To log requests to the file `/tmp/access.log` with a size limit of
+1MB, use this:
+
+```clojure
+(ns my.app
+  (:require [ring.middleware.common-log :refer [wrap-with-common-log]))
+
+(def app
+  (-> handler
+      (wrap-with-common-log :filename "/tmp/access.log"
+                            :rotate? true
+                            :max-file-size 1000000)))
+```
 
 ## License
 
