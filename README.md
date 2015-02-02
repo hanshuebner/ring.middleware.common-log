@@ -17,7 +17,7 @@ Add this to your dependencies in `project.clj`.
 
 ## Features ##
 
- - Writes log entries in [Common Log](http://en.wikipedia.org/wiki/Common_Log_Format) which can be processed by common web log processing tools
+ - Writes log entries in [Common Log Format](http://en.wikipedia.org/wiki/Common_Log_Format) which can be processed by common web log processing tools
  - Buffers writes to log file internally to reduce overhead
  - Can automatically rename log file when a set size limit is reached
  - Logs to standard output if no log filename has been set
