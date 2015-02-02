@@ -75,6 +75,9 @@
     (deref p)))
 
 (defn wrap-with-common-log [handler {:keys [filename max-file-size] :as options}]
+  (assert (or (nil? filename)
+              (string? filename))
+          "string or nil must be passed for :filename option")
   (when (and filename
              max-file-size
              (= (.lastIndexOf filename ".") -1))
