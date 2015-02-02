@@ -1,4 +1,4 @@
-(defproject ring.middleware.common-log "0.1.0"
+(defproject ring.middleware.common-log "0.2.0-SNAPSHOT"
   :description "A ring middleware to log requests in Common Log format"
   :url "https://github.com/hanshuebner/ring.middleware.common-log"
   :scm {:name "git"
